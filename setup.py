@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pydynamics",
-    version="0.0.1",
+    version="0.0.2",
     author="Dan Goscomb",
     author_email="dan@flowplex.co.uk",
     description="Talk to On-Prem Dynamics CRM",
@@ -18,4 +18,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    python_requires='>=3',
+    install_requires=['requests', 'lxml']
 )
