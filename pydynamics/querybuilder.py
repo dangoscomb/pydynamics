@@ -1,11 +1,10 @@
 import urllib.parse
-
+import json
 
 class QueryBuilder:
 
-    def __init__(self):
+    def __init__(self, entity: str):
         self._query = None
-        self._entity = None
         self._action = None
         self._fetchxml = None
         self._selects = None
@@ -14,11 +13,17 @@ class QueryBuilder:
         self._order = []
         self._top = None
         self._skip = None
+        self._guid = None
+        self._data = None
 
-    def entity(self, entity: str):
         if not isinstance(entity, (str)):
-            raise Exception('Must pass a string to entity()')
+            raise Exception('Must pass a string as entity')
         self._entity = entity
+
+    def guid(self, guid: str):
+        if not isinstance(guid, (str)):
+            raise Exception('Must pass a string to guid()')
+        self._guid = guid
         return self
 
     def action(self, action: str):
@@ -90,90 +95,101 @@ class QueryBuilder:
         self._fetchxml = xml
         return self
 
+    def data(self, data):
+        self._data = data
+        return self
+
     def _buildentity(self):
         if self._entity is None:
             raise Exception('Entity must be set')
 
-        self._query = self._entity
+        self._query = str(self._entity)
+
+    def _buildguid(self):
+        self._query += "(%s)" % self._guid
 
     def _buildaction(self):
-        self._query += '/Microsoft.Dynamics.CRM.' + self._action;
+        self._query += "/Microsoft.Dynamics.CRM.%s" % self._action
 
     def _buildfetchxml(self):
-        self._query += 'fetchXml='+urllib.parse.quote_plus(self._fetchxml)
+        self._query += "fetchXml=%s" % urllib.parse.quote_plus(self._fetchxml)
 
     def _buildselects(self):
-        self._query += '$select='
-        self._query += ','.join(self._selects)
+        self._query += "$select=%s" % ",".join(self._selects)
 
     def _buildfilters(self):
         if self._query[-1:] != "?":
-            self._query += '&'
+            self._query += "&"
 
         self._query += "$filter="
         _first = True
-        ftext = ""
-        for filter in self._filters:
+        for fil in self._filters:
             if _first is not True:
-                ftext += " "+filter['logop']+" "
+                self._query += " %s " % fil['logop']
             _first = False
 
-            if filter['comp'] == 'startswith':
-                ftext += "startswith("+filter['by']+", '"+urllib.parse.quote_plus(str(filter['value']))+"')"
-            elif filter['comp'] == 'between':
-                ftext += "Microsoft.Dynamics.CRM.Between(PropertyName='"+filter['by']+"', PropertyValues=['"+urllib.parse.quote_plus(str(filter['value'][0]))+"','"+urllib.parse.quote_plus(str(filter['value'][1]))+"'])"
-            elif filter['comp'] == 'in':
-                ftext += "Microsoft.Dynamics.CRM.In(PropertyName='"+filter['by']+"',PropertyValues=['"+"','".join(filter['value'])+"'])"
-            elif filter['comp'] == 'notin':
-                ftext += "Microsoft.Dynamics.CRM.NotIn(PropertyName='"+filter['by']+"',PropertyValues=['"+"','".join(filter['value'])+"'])"
-            elif filter['comp'] == 'contains':
-                ftext += "contains("+filter['by']+", '"+urllib.parse.quote_plus(filter['value'])+"')"
+            if fil['comp'] == 'startswith':
+                self._query += "startswith(%s, '%s')" % (fil['by'], urllib.parse.quote_plus(str(fil['value'])))
+            elif fil['comp'] == 'between':
+                self._query += "Microsoft.Dynamics.CRM.Between(PropertyName='%s', PropertyValues=['%s','%s'])" %\
+                               (fil['by'], urllib.parse.quote_plus(str(fil['value'][0])),
+                                urllib.parse.quote_plus(str(fil['value'][1])))
+            elif fil['comp'] == 'in':
+                self._query += "Microsoft.Dynamics.CRM.In(PropertyName='%s',PropertyValues=['%s'])" %\
+                               (fil['by'], "','".join(fil['value']))
+            elif fil['comp'] == 'notin':
+                self._query += "Microsoft.Dynamics.CRM.NotIn(PropertyName='%s',PropertyValues=['%s'])" %\
+                               (fil['by'], "','".join(fil['value']))
+            elif fil['comp'] == 'contains':
+                self._query += "contains(%s, '%s')" % (fil['by'], urllib.parse.quote_plus(fil['value']))
             else:
-                ftext += filter['by'] + " " + filter['comp'] + " "
-                if filter['type'] == 'str':
-                    ftext += "'"+urllib.parse.quote_plus(filter['value'])+"'"
-                elif filter['type'] == 'bool':
-                    if filter['value'] is True:
-                        ftext += "true"
+                self._query += "%s %s " % (fil['by'], fil['comp'])
+                if fil['type'] == 'str':
+                    self._query += "'%s'" % urllib.parse.quote_plus(fil['value'])
+                elif fil['type'] == 'bool':
+                    if fil['value'] is True:
+                        self._query += "true"
                     else:
-                        ftext += "false"
+                        self._query += "false"
                 else:
-                    ftext += filter['value']
-
-            self._query += urllib.parse.quote_plus(ftext)
+                    self._query += "%s" % fil['value']
 
     def _buildexpand(self):
         if self._query[-1:] != "?":
-            self._query += '&'
+            self._query += "&"
 
-        self._query += 'expand='
-        self._query += ','.join(self._expand)
+        self._query += "expand=%s" % ",".join(self._expand)
 
     def _buildorder(self):
         if self._query[-1:] != "?":
-            self._query += '&'
+            self._query += "&"
 
         self._query += "$orderby="
         first = True
         for o in self._order:
             if first is False:
                 self._query += ","
-            self._query += ",".join(o['by'])+" "+o['mode']
+            self._query += "%s %s" % (",".join(o['by']), o['mode'])
             first = False
 
     def _buildlimit(self):
         if self._query[-1:] != "?":
-            self._query += '&'
+            self._query += "&"
 
-        self._query += "$top="+str(self._top)
+        self._query += "$top=%d" % self._top
 
         if self._skip is not None:
-            self._query += "&$skip="+str(self._skip)
+            self._query += "&$skip=%d" % self._skip
 
     def buildquery(self):
         self._buildentity()
+
+        if self._guid is not None:
+            self._buildguid()
+
         if self._action is not None:
             self._buildaction()
+
         self._query += '?'
 
         if self._fetchxml is not None:
@@ -195,4 +211,10 @@ class QueryBuilder:
         if self._top is not None:
             self._buildlimit()
 
-        return self._query
+        return self._query.rstrip("?")
+
+    def getdata(self):
+        try:
+            return json.dumps(self._data)
+        except TypeError:
+            raise Exception('Unable to encode data')

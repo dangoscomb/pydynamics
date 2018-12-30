@@ -16,19 +16,92 @@ class Client:
             raise Exception('Query must be of type QueryBuilder')
 
         resp = requests.get(self._endpoint + query.buildquery(), headers=self._headers)
-        results = resp.json()['value']
+        results = []
+        if resp.status_code in [404, 204]:
+            return results
+        elif resp.status_code == 200:
+            if 'value' in resp.json():
+                results += resp.json()['value']
+            else:
+                results.append(resp.json())
 
-        nextlink = None
-        if '@odata.nextLink' in resp.json():
-            nextlink = resp.json()['@odata.nextLink']
-
-        while nextlink is not None:
-            resp = requests.get(nextlink, headers=self._headers)
-            results = results + resp.json()['value']
+            nextlink = None
             if '@odata.nextLink' in resp.json():
                 nextlink = resp.json()['@odata.nextLink']
-            else:
-                nextlink = None
 
+            while nextlink is not None:
+                resp = requests.get(nextlink, headers=self._headers)
+                if resp.status_code != 200:
+                    raise Exception("Failed to query nextLink")
+                results = results + resp.json()['value']
+                if '@odata.nextLink' in resp.json():
+                    nextlink = resp.json()['@odata.nextLink']
+                else:
+                    nextlink = None
+            return results
+        else:
+            raise Exception("Bad Request")
 
-        return results
+    def update(self, query):
+        if not isinstance(query, pydynamics.querybuilder.QueryBuilder):
+            raise Exception("Query must be of type QueryBuilder")
+
+        resp = requests.patch(self._endpoint + query.buildquery(), data=query.getdata(), headers=self._headers)
+        if resp.status_code == 204:
+            return True
+        elif resp.status_code == 404:
+            return False
+        elif resp.status_code > 400:
+            raise Exception("Bad Request")
+        else:
+            return False
+
+    def create(self, query):
+        if not isinstance(query, pydynamics.querybuilder.QueryBuilder):
+            raise Exception("Query must be of type QueryBuilder")
+
+        resp = requests.post(self._endpoint + query.buildquery(), data=query.getdata(), headers=self._headers)
+
+        if resp.status_code == 204:
+            guidstring = resp.headers['OData-EntityId']
+            return guidstring[-37:-1]
+        else:
+            raise Exception('Create failed')
+
+    def delete(self, query):
+        if not isinstance(query, pydynamics.querybuilder.QueryBuilder):
+            raise Exception("Query must be of type QueryBuilder")
+
+        resp = requests.delete(self._endpoint + query.buildquery(), headers=self._headers)
+        if resp.status_code == 204:
+            return True
+        elif resp.status_code == 404:
+            return False
+        elif resp.status_code > 400:
+            raise Exception("Bad Request")
+        else:
+            return False
+
+    def associate(self, query):
+        if not isinstance(query, pydynamics.querybuilder.QueryBuilder):
+            raise Exception("Query must be of type QueryBuilder")
+
+        resp = requests.post(self._endpoint + query.buildquery(), data=query.getdata(), headers=self._headers)
+        if resp.status_code == 204:
+            return True
+        elif resp.status_code == 404:
+            return False
+        elif resp.status_code > 400:
+            raise Exception("Bad Request")
+        else:
+            return False
+
+    def action(self, query):
+        if not isinstance(query, pydynamics.querybuilder.QueryBuilder):
+            raise Exception("Query must be of type QueryBuilder")
+
+        resp = requests.post(self._endpoint + query.buildquery(), data=query.getdata(), headers=self._headers)
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            raise Exception("Bad Request")

@@ -4,7 +4,7 @@ from uuid import uuid4
 import datetime
 
 
-def get(url, username, password):
+def get(url: str, username: str, password: str):
     try:
         crmres = requests.get(url + "XrmServices/2011/Organization.svc?wsdl=wsdl0")
     except requests.exceptions.RequestException as e:
