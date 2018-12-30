@@ -44,7 +44,11 @@ result = client.select(q)
 The below creates a contact entity with the data provided to the query builder. The GUID of the new item will be returned if successful.
 ```python
 from pydynamics.querybuilder import QueryBuilder
-q = QueryBuilder('contacts').data({'firstname': 'Dan', 'lastname': 'Test', 'emailaddress1': 'dan@fdsdsds.com'})
+q = QueryBuilder('contacts').data({
+    'firstname': 'Dan',
+    'lastname': 'Test',
+    'emailaddress1': 'dan@fdsdsds.com'
+    })
 guid = client.create(q)
 ```
 
@@ -52,6 +56,7 @@ guid = client.create(q)
 The below updates the firstname field on the specific contact record.
 ```python
 from pydynamics.querybuilder import QueryBuilder
-q = QueryBuilder('contacts').guid('1bf1c4cf-1ed1-e311-941c-0050568a018c').data({'firstname': 'Daniel'})
+q = QueryBuilder('contacts').guid('1bf1c4cf-1ed1-e311-941c-0050568a018c').\
+    data({'firstname': 'Daniel'})
 client.update(q)
 ```
