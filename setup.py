@@ -1,14 +1,12 @@
 import setuptools
 
-with open('requirements.txt') as requirements:
-    required = requirements.read().splitlines()
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="pydynamics",
-    version="0.0.6",
+    version="0.0.7",
     author="Dan Goscomb",
     author_email="dan@flowplex.co.uk",
     description="Talk to On-Prem Dynamics CRM",
@@ -22,5 +20,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3',
-    install_requires=required
+    install_requires=[
+        'lxml',
+        'requests'
+    ]
 )
