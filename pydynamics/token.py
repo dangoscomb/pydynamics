@@ -33,8 +33,8 @@ def get(url: str, username: str, password: str):
     xml += "</a:ReplyTo>";
     xml += "<Security s:mustUnderstand=\"1\" xmlns:u=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\" xmlns=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">";
     xml += "<u:Timestamp  u:Id=\"{" + str(uuid4()) + "}\">";
-    xml += "<u:Created>" + datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ') + "</u:Created>";
-    xml += "<u:Expires>" + (datetime.datetime.now() + datetime.timedelta(hours=1)).strftime(
+    xml += "<u:Created>" + datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ') + "</u:Created>";
+    xml += "<u:Expires>" + (datetime.datetime.utcnow() + datetime.timedelta(hours=1)).strftime(
         '%Y-%m-%dT%H:%M:%S.%fZ') + "</u:Expires>";
     xml += "</u:Timestamp>";
     xml += "<UsernameToken u:Id=\"{" + str(uuid4()) + "}\">";
