@@ -158,7 +158,7 @@ class QueryBuilder:
         if self._query[-1:] != "?":
             self._query += "&"
 
-        self._query += "expand=%s" % ",".join(self._expand)
+        self._query += "$expand=%s" % ",".join(self._expand)
 
     def _buildorder(self):
         if self._query[-1:] != "?":
