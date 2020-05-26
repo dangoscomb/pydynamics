@@ -1,5 +1,8 @@
 import urllib.parse
 import json
+from lxml import etree
+import urllib
+
 
 class QueryBuilder:
 
@@ -94,6 +97,20 @@ class QueryBuilder:
 
         self._fetchxml = xml
         return self
+
+    def update_fetchxml_cookie(self, cookie: str, page: int):
+        if self._fetchxml is None:
+            raise Exception('No FetchXML has been set')
+
+        try:
+            xml = etree.fromstring(self._fetchxml)
+            cook = etree.fromstring(cookie)
+            lecookie = urllib.parse.unquote(urllib.parse.unquote(cook.get('pagingcookie')))
+            xml.set('page', '%d' % page)
+            xml.set('paging-cookie', lecookie)
+            self._fetchxml = etree.tostring(xml)
+        except Exception as e:
+            raise e
 
     def data(self, data):
         self._data = data

@@ -38,6 +38,25 @@ class Client:
                     nextlink = resp.json()['@odata.nextLink']
                 else:
                     nextlink = None
+
+            cookie = None
+            page = 2
+            if '@Microsoft.Dynamics.CRM.fetchxmlpagingcookie' in resp.json():
+                cookie = resp.json()['@Microsoft.Dynamics.CRM.fetchxmlpagingcookie']
+                query.update_fetchxml_cookie(cookie, page)
+
+            while cookie is not None:
+                page += 1
+                resp = requests.get(self._endpoint + query.buildquery(), headers=self._headers)
+                if resp.status_code != 200:
+                    raise Exception("Failed to query next page")
+                results = results + resp.json()['value']
+                if '@Microsoft.Dynamics.CRM.fetchxmlpagingcookie' in resp.json():
+                    cookie = resp.json()['@Microsoft.Dynamics.CRM.fetchxmlpagingcookie']
+                    query.update_fetchxml_cookie(cookie, page)
+                else:
+                    cookie = None
+
             return results
         else:
             raise Exception("Bad Request")
