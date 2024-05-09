@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pydynamics",
-    version="0.0.8",
+    version="0.0.10",
     author="Dan Goscomb",
     author_email="dan@flowplex.co.uk",
     description="Talk to On-Prem Dynamics CRM",

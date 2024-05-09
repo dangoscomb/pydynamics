@@ -39,7 +39,7 @@ def get(url: str, username: str, password: str):
     xml += "</u:Timestamp>";
     xml += "<UsernameToken u:Id=\"{" + str(uuid4()) + "}\">";
     xml += "<Username>" + username + "</Username>";
-    xml += "<Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">" + password + "</Password>";
+    xml += "<Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">" + escape(password) + "</Password>";
     xml += "</UsernameToken>";
     xml += "</Security>";
     xml += "<a:To s:mustUnderstand=\"1\">" + usernamemixed + "</a:To>";
@@ -72,3 +72,12 @@ def get(url: str, username: str, password: str):
     token = etree.tostring(tok[0])
 
     return token.decode("utf-8")
+
+
+def escape( str_xml: str ):
+    str_xml = str_xml.replace("&", "&amp;")
+    str_xml = str_xml.replace("<", "&lt;")
+    str_xml = str_xml.replace(">", "&gt;")
+    str_xml = str_xml.replace("\"", "&quot;")
+    str_xml = str_xml.replace("'", "&apos;")
+    return str_xml
